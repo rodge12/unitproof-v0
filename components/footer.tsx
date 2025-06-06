@@ -113,14 +113,14 @@ export function Footer() {
                 onClick={handleEmailClick}
               >
                 <Mail className="w-5 h-5 mr-2 text-cyan-400 flex-shrink-0" />
-                <span className="text-sm">info@unitproof.com</span>
+                <span className="text-sm">unitproof@outlook.com</span>
               </div>
               <div
                 className="flex items-center cursor-pointer hover:text-green-400 transition-colors"
                 onClick={handlePhoneClick}
               >
                 <Phone className="w-5 h-5 mr-2 text-green-400 flex-shrink-0" />
-                <span className="text-sm">+971 50 123 4567</span>
+                <span className="text-sm">+971 58 196 5830</span>
               </div>
               <div
                 className="flex items-center cursor-pointer hover:text-green-400 transition-colors"
