@@ -269,13 +269,13 @@ export function LeadForm({ towerName, onSuccess }: LeadFormProps) {
             <div className="flex items-center text-gray-300">
               <Mail className="w-4 h-4 mr-2 text-cyan-400" />
               <a href="mailto:info@unitproof.com" className="hover:text-cyan-400 transition-colors">
-                info@unitproof.com
+                unitproof@outlook.com
               </a>
             </div>
             <div className="flex items-center text-gray-300">
               <Phone className="w-4 h-4 mr-2 text-green-400" />
               <a href="tel:+971501234567" className="hover:text-green-400 transition-colors">
-                +971 50 123 4567
+                +971 58 196 5830
               </a>
             </div>
           </div>
