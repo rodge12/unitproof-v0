@@ -5,18 +5,18 @@ import { Mail, Phone, MapPin, MessageSquare } from "lucide-react"
 export function Footer() {
   const handleEmailClick = () => {
     window.open(
-      "mailto:info@unitproof.com?subject=Inquiry about UnitProof&body=Hi, I would like to learn more about UnitProof.",
+      "mailto:unitproof@outlook.com?subject=Inquiry about UnitProof&body=Hi, I would like to learn more about UnitProof.",
       "_blank",
     )
   }
 
   const handlePhoneClick = () => {
-    window.open("tel:+971501234567", "_blank")
+    window.open("tel:+971581965830", "_blank")
   }
 
   const handleWhatsAppClick = () => {
     const message = encodeURIComponent("Hi, I would like to learn more about UnitProof and your vacancy reports.")
-    window.open(`https://wa.me/971501234567?text=${message}`, "_blank")
+    window.open(`https://wa.me/971581965830?text=${message}`, "_blank")
   }
 
   const scrollToTop = () => {
