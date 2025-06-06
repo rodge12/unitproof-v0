@@ -92,7 +92,7 @@ export function LeadForm({ towerName, onSuccess }: LeadFormProps) {
     const message = encodeURIComponent(
       `Hi! I'm interested in getting a vacancy report${towerName ? ` for ${towerName}` : ""}.\n\nName: ${formData.name}\nEmail: ${formData.email}\n\n${formData.message}`,
     )
-    const whatsappUrl = `https://wa.me/971501234567?text=${message}`
+    const whatsappUrl = `https://wa.me/971581965830?text=${message}`
     window.open(whatsappUrl, "_blank")
   }
 
@@ -171,7 +171,7 @@ export function LeadForm({ towerName, onSuccess }: LeadFormProps) {
                 id="phone"
                 value={formData.phone}
                 onChange={(e) => handleChange("phone", e.target.value)}
-                placeholder="+971 50 123 4567"
+                placeholder="+971 58 196 5830"
                 className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-cyan-400"
               />
             </div>
