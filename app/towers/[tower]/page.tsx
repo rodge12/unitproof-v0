@@ -15,11 +15,12 @@ export default async function TowerPage({ params }: { params: { tower: string } 
   return (
     <main className="text-white p-8">
       <h1 className="text-3xl font-bold mb-4">{towerData.tower_name}</h1>
-      <p><strong>Project:</strong> {towerData.project}</p>
-      <p><strong>Area:</strong> {towerData.area}</p>
-      <p><strong>Size:</strong> {towerData.size} sqft</p>
-      <p><strong>Rent:</strong> {towerData.rent} AED</p>
-      <p><strong>Days Vacant:</strong> {towerData.days_vacant}</p>
+     <p><strong>Project:</strong> {unit["Tower Name"]}</p>
+     <p><strong>Unit No.:</strong> {unit["Unit No."]}</p>
+     <p><strong>Rent:</strong> {unit["Last Known Rent"]} AED</p>
+     <p><strong>Days Vacant:</strong> {unit["Days Vacant"] ?? "N/A"}</p>
+     <p><strong>Vacancy Status:</strong> {unit["Status"]}</p>
+     <p><strong>Last Contract End Date:</strong> {unit["Last Contract End Date"]}</p>
     </main>
-  );
+  );  
 }
