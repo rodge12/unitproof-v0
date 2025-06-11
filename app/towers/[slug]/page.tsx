@@ -1,7 +1,7 @@
 import { createClient } from '@/utils/supabase/server';
 import { cookies } from 'next/headers';
 import { DownloadButton } from './DownloadButton';
-import { isValidSlug, slugToName } from '@/utils/slug';
+import { isValidSlug, slugToName, createSlug } from '@/utils/slug';
 
 type Unit = {
   unit_no: string;
@@ -15,6 +15,34 @@ type Tower = {
   tower_name: string;
   units: Unit[];
 };
+
+// This function runs at build time to generate all possible tower pages
+export async function generateStaticParams() {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+
+  // Fetch all unique tower names
+  const { data: towers, error } = await supabase
+    .from('vacant_units')
+    .select('tower_name')
+    .order('tower_name');
+
+  if (error) {
+    console.error('Error fetching tower names:', error);
+    return [];
+  }
+
+  // Get unique tower names and convert to slugs
+  const uniqueTowers = [...new Set(towers?.map(t => t.tower_name) || [])];
+  
+  return uniqueTowers.map(towerName => ({
+    slug: createSlug(towerName)
+  }));
+}
+
+// Make the page static
+export const dynamic = 'force-static';
+export const revalidate = 3600; // Revalidate every hour
 
 export default async function TowerPage({ params }: { params: { slug: string } }) {
   // Validate the slug format
