@@ -11,7 +11,7 @@ const FLAGSHIP_TOWER = "Paramount Tower Hotel & Residences, Business Bay";
 type Tower = {
   name: string;
   vacantUnits: number;
-  slug: string;
+  tower: string;
 };
 
 type TowerListProps = {
@@ -127,7 +127,7 @@ export function TowerList({ towers, isLoading = false }: TowerListProps) {
             return (
               <Link
                 key={tower.name}
-                href={`/towers/${tower.slug}`}
+                href={`/towers/${tower.tower}`}
                 className={`block p-4 rounded-lg hover:bg-gray-700 transition-colors bg-gray-700/50 relative ${isFlagship ? 'ring-2 ring-yellow-400 ring-offset-2 shadow-lg shadow-yellow-400/30 animate-pulse-slow' : ''}`}
               >
                 <div className="flex items-center gap-2 mb-1">
