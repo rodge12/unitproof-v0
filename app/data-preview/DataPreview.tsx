@@ -8,16 +8,15 @@ import { Badge } from "@/components/ui/badge";
 import { DownloadButton } from '../towers/[tower]/DownloadButton';
 
 type Unit = {
-  unitNo: string;
+  unit: string;
   status: string;
   lastContractEndDate: string;
   daysVacant: number | null;
-  lastKnownRent: number | null;
-  saleDate: string | null;
+  rent: number | null;
 };
 
 type Tower = {
-  name: string;
+  tower: string;
   slug: string;
   units: Unit[];
 };
@@ -33,25 +32,33 @@ export function DataPreview({ initialData }: DataPreviewProps) {
 
   // Get unique statuses for filter
   const statuses = useMemo(() => {
+    if (!initialData || !Array.isArray(initialData)) return [];
+    
     const uniqueStatuses = new Set<string>();
     initialData.forEach(tower => {
-      tower.units.forEach(unit => {
-        uniqueStatuses.add(unit.status);
-      });
+      if (tower.units && Array.isArray(tower.units)) {
+        tower.units.forEach(unit => {
+          if (unit.status) {
+            uniqueStatuses.add(unit.status);
+          }
+        });
+      }
     });
     return Array.from(uniqueStatuses).sort();
   }, [initialData]);
 
   // Filter and search data
   const filteredData = useMemo(() => {
+    if (!initialData || !Array.isArray(initialData)) return [];
+    
     return initialData
       .filter(tower => selectedTower === 'all' || tower.slug === selectedTower)
       .map(tower => ({
         ...tower,
-        units: tower.units.filter(unit => {
+        units: (tower.units || []).filter(unit => {
           const matchesSearch = 
-            unit.unitNo.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            unit.status.toLowerCase().includes(searchQuery.toLowerCase());
+            (unit.unit?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+            (unit.status?.toLowerCase() || '').includes(searchQuery.toLowerCase());
           const matchesStatus = statusFilter === 'all' || unit.status === statusFilter;
           return matchesSearch && matchesStatus;
         })
@@ -61,8 +68,12 @@ export function DataPreview({ initialData }: DataPreviewProps) {
 
   // Get total counts
   const totalUnits = useMemo(() => {
-    return filteredData.reduce((sum, tower) => sum + tower.units.length, 0);
+    return filteredData.reduce((sum, tower) => sum + (tower.units?.length || 0), 0);
   }, [filteredData]);
+
+  if (!initialData || !Array.isArray(initialData)) {
+    return <div className="text-white">No data available</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -95,7 +106,7 @@ export function DataPreview({ initialData }: DataPreviewProps) {
             <SelectItem value="all">All Towers</SelectItem>
             {initialData.map(tower => (
               <SelectItem key={tower.slug} value={tower.slug}>
-                {tower.name}
+                {tower.tower}
               </SelectItem>
             ))}
           </SelectContent>
@@ -112,18 +123,18 @@ export function DataPreview({ initialData }: DataPreviewProps) {
         {filteredData.map(tower => (
           <Card key={tower.slug} className="bg-gray-800 border-gray-700">
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-xl">{tower.name}</CardTitle>
+              <CardTitle className="text-xl">{tower.tower}</CardTitle>
               <DownloadButton tower={tower} />
             </CardHeader>
             <CardContent>
               <div className="grid gap-4">
                 {tower.units.map(unit => (
                   <div
-                    key={unit.unitNo}
-                    className="bg-gray-700/50 rounded-lg p-4 grid grid-cols-1 md:grid-cols-4 gap-4"
+                    key={unit.unit}
+                    className="bg-gray-700/50 rounded-lg p-4 grid grid-cols-1 md:grid-cols-3 gap-4"
                   >
                     <div>
-                      <h4 className="font-semibold">Unit {unit.unitNo}</h4>
+                      <h4 className="font-semibold">Unit {unit.unit}</h4>
                       <Badge
                         className={`mt-2 ${
                           unit.status.includes('Vacant')
@@ -149,18 +160,10 @@ export function DataPreview({ initialData }: DataPreviewProps) {
                     <div className="text-gray-300">
                       <p>
                         <span className="font-medium">Last Known Rent:</span>{' '}
-                        {unit.lastKnownRent
-                          ? `AED ${unit.lastKnownRent.toLocaleString()}`
+                        {unit.rent
+                          ? `AED ${unit.rent.toLocaleString()}`
                           : '—'}
                       </p>
-                    </div>
-                    <div className="text-gray-300">
-                      {unit.saleDate && (
-                        <p>
-                          <span className="font-medium">Sale Date:</span>{' '}
-                          {unit.saleDate}
-                        </p>
-                      )}
                     </div>
                   </div>
                 ))}
