@@ -30,11 +30,15 @@ export default async function TowerPage({ params }: { params: { slug: string } }
   const cookieStore = cookies();
   const supabase = createClient(cookieStore);
 
-  // Fetch all units for the tower
+  // Convert slug back to tower name format
+  const towerName = slugToName(params.slug);
+
+  // Fetch all units for the tower using the tower name
   const { data: units, error } = await supabase
     .from('vacant_units')
     .select('*')
-    .eq('tower_slug', params.slug);
+    .eq('tower_name', towerName)
+    .order('unit_no', { ascending: true });
 
   if (error) {
     console.error('Error fetching tower data:', error);
@@ -49,14 +53,12 @@ export default async function TowerPage({ params }: { params: { slug: string } }
   if (!units || units.length === 0) {
     return (
       <div className="p-8 text-white">
-        <h1 className="text-2xl font-bold mb-4">No data found for this tower</h1>
+        <h1 className="text-2xl font-bold mb-4">No data found for {towerName}</h1>
         <p>The requested tower could not be found in our database.</p>
       </div>
     );
   }
 
-  // Get tower name from the first unit
-  const towerName = units[0].tower_name;
   const tower: Tower = {
     tower_name: towerName,
     units: units.map(unit => ({
@@ -68,12 +70,45 @@ export default async function TowerPage({ params }: { params: { slug: string } }
     }))
   };
 
+  // Calculate summary statistics
+  const totalUnits = tower.units.length;
+  const vacantUnits = tower.units.filter(unit => unit.status.includes('Vacant')).length;
+  const rentedUnits = tower.units.filter(unit => unit.status.includes('Rented')).length;
+  const averageRent = tower.units
+    .filter(unit => unit.last_known_rent !== null)
+    .reduce((sum, unit) => sum + (unit.last_known_rent || 0), 0) / 
+    tower.units.filter(unit => unit.last_known_rent !== null).length;
+
   return (
     <main className="p-4 md:p-8 text-white">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <h1 className="text-2xl md:text-3xl font-bold">{tower.tower_name}</h1>
         <DownloadButton tower={tower} />
       </div>
+
+      {/* Summary Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+          <h3 className="text-sm text-gray-400 font-medium mb-1">Total Units</h3>
+          <p className="text-2xl font-semibold">{totalUnits}</p>
+        </div>
+        <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+          <h3 className="text-sm text-gray-400 font-medium mb-1">Vacant Units</h3>
+          <p className="text-2xl font-semibold text-red-300">{vacantUnits}</p>
+        </div>
+        <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+          <h3 className="text-sm text-gray-400 font-medium mb-1">Rented Units</h3>
+          <p className="text-2xl font-semibold text-green-300">{rentedUnits}</p>
+        </div>
+        <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+          <h3 className="text-sm text-gray-400 font-medium mb-1">Average Rent</h3>
+          <p className="text-2xl font-semibold">
+            {averageRent ? `AED ${Math.round(averageRent).toLocaleString()}` : '—'}
+          </p>
+        </div>
+      </div>
+
+      {/* Units Grid */}
       <div className="grid gap-4 md:gap-6">
         {tower.units.map((unit) => (
           <div
