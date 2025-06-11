@@ -5,14 +5,15 @@ import { Download } from "lucide-react";
 import * as XLSX from 'xlsx';
 
 type Unit = {
-  unit_no: string;
+  unit: string;
+  floor: number;
+  type: string;
+  rent: number;
   status: string;
-  last_contract_end_date: string;
-  days_vacant: number | null;
-  last_known_rent: number | null;
 };
 
 type Tower = {
+  tower: string;
   tower_name: string;
   units: Unit[];
 };
@@ -21,11 +22,11 @@ export function DownloadButton({ tower }: { tower: Tower }) {
   const handleDownload = () => {
     // Prepare data for Excel
     const data = tower.units.map(unit => ({
-      'Unit No.': unit.unit_no,
+      'Unit No.': unit.unit,
+      'Floor': unit.floor,
+      'Type': unit.type,
       'Status': unit.status,
-      'Contract End Date': unit.last_contract_end_date || '',
-      'Days Vacant': unit.days_vacant || '',
-      'Last Known Rent': unit.last_known_rent ? `AED ${unit.last_known_rent.toLocaleString()}` : ''
+      'Rent': unit.rent ? `AED ${unit.rent.toLocaleString()}` : ''
     }));
 
     // Create worksheet

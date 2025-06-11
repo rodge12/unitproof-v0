@@ -1,19 +1,29 @@
 import { createClient } from '@/utils/supabase/server';
 import { cookies } from 'next/headers';
+import { notFound } from 'next/navigation';
 import { DownloadButton } from './DownloadButton';
 import { isValidSlug, slugToName, createSlug } from '@/utils/slug';
 
 type Unit = {
-  unit_no: string;
+  unit: string;
+  floor: number;
+  type: string;
+  rent: number;
   status: string;
-  last_contract_end_date: string;
-  days_vacant: number | null;
-  last_known_rent: number | null;
 };
 
 type Tower = {
+  tower: string;
   tower_name: string;
   units: Unit[];
+};
+
+type VacantUnit = {
+  unit_no: string;
+  tower_name: string;
+  unit_type: string;
+  last_known_rent: number;
+  status: string;
 };
 
 // This function runs at build time to generate all possible tower pages
@@ -45,144 +55,106 @@ export const dynamic = 'force-static';
 export const revalidate = 3600; // Revalidate every hour
 
 export default async function TowerPage({ params }: { params: { tower: string } }) {
-  // Validate the slug format
-  if (!isValidSlug(params.tower)) {
-    return (
-      <div className="p-8 text-white">
-        <h1 className="text-2xl font-bold mb-4">Invalid Tower URL</h1>
-        <p>The tower URL format is invalid.</p>
-      </div>
-    );
-  }
-
   const cookieStore = cookies();
   const supabase = createClient(cookieStore);
 
-  // Convert slug back to tower name format
-  const towerName = slugToName(params.tower);
-
-  // Fetch all units for the tower using the tower name
+  // Fetch all units for the tower using the slug
   const { data: units, error } = await supabase
     .from('vacant_units')
     .select('*')
-    .eq('tower_name', towerName)
-    .order('unit_no', { ascending: true });
+    .eq('tower_slug', params.tower)
+    .order('unit_no');
 
   if (error) {
     console.error('Error fetching tower data:', error);
     return (
-      <div className="p-8 text-white">
-        <h1 className="text-2xl font-bold mb-4">Error loading tower data</h1>
-        <p>Please try again later.</p>
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-2xl font-bold mb-4">Error Loading Tower</h1>
+        <p className="text-red-500">Failed to load tower data. Please try again later.</p>
       </div>
     );
   }
 
   if (!units || units.length === 0) {
-    return (
-      <div className="p-8 text-white">
-        <h1 className="text-2xl font-bold mb-4">No data found for {towerName}</h1>
-        <p>The requested tower could not be found in our database.</p>
-      </div>
-    );
+    notFound();
   }
 
+  // Get the tower name from the first unit
+  const towerName = units[0].tower_name;
+
+  // Calculate summary statistics
+  const totalUnits = units.length;
+  const vacantUnits = units.filter((unit: VacantUnit) => unit.status === 'Vacant').length;
+  const rentedUnits = units.filter((unit: VacantUnit) => unit.status === 'Rented').length;
+  const averageRent = Math.round(
+    units.reduce((sum: number, unit: VacantUnit) => sum + (unit.last_known_rent || 0), 0) / units.length
+  );
+
+  // Format the data for the tower
   const tower: Tower = {
+    tower: towerName,
     tower_name: towerName,
-    units: units.map(unit => ({
-      unit_no: unit.unit_no,
-      status: unit.status,
-      last_contract_end_date: unit.last_contract_end_date,
-      days_vacant: unit.days_vacant,
-      last_known_rent: unit.last_known_rent
+    units: units.map((unit: VacantUnit) => ({
+      unit: unit.unit_no,
+      floor: parseInt(unit.unit_no.replace(/\D/g, '')),
+      type: unit.unit_type,
+      rent: unit.last_known_rent,
+      status: unit.status
     }))
   };
 
-  // Calculate summary statistics
-  const totalUnits = tower.units.length;
-  const vacantUnits = tower.units.filter(unit => unit.status.includes('Vacant')).length;
-  const rentedUnits = tower.units.filter(unit => unit.status.includes('Rented')).length;
-  const averageRent = tower.units
-    .filter(unit => unit.last_known_rent !== null)
-    .reduce((sum, unit) => sum + (unit.last_known_rent || 0), 0) / 
-    tower.units.filter(unit => unit.last_known_rent !== null).length;
-
   return (
-    <main className="p-4 md:p-8 text-white">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-        <h1 className="text-2xl md:text-3xl font-bold">{tower.tower_name}</h1>
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-2xl font-bold">{tower.tower}</h1>
         <DownloadButton tower={tower} />
       </div>
 
       {/* Summary Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
-          <h3 className="text-sm text-gray-400 font-medium mb-1">Total Units</h3>
+        <div className="bg-gray-700/50 p-4 rounded-lg">
+          <h3 className="text-sm text-gray-400">Total Units</h3>
           <p className="text-2xl font-semibold">{totalUnits}</p>
         </div>
-        <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
-          <h3 className="text-sm text-gray-400 font-medium mb-1">Vacant Units</h3>
-          <p className="text-2xl font-semibold text-red-300">{vacantUnits}</p>
+        <div className="bg-gray-700/50 p-4 rounded-lg">
+          <h3 className="text-sm text-gray-400">Vacant Units</h3>
+          <p className="text-2xl font-semibold text-green-400">{vacantUnits}</p>
         </div>
-        <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
-          <h3 className="text-sm text-gray-400 font-medium mb-1">Rented Units</h3>
-          <p className="text-2xl font-semibold text-green-300">{rentedUnits}</p>
+        <div className="bg-gray-700/50 p-4 rounded-lg">
+          <h3 className="text-sm text-gray-400">Rented Units</h3>
+          <p className="text-2xl font-semibold text-blue-400">{rentedUnits}</p>
         </div>
-        <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
-          <h3 className="text-sm text-gray-400 font-medium mb-1">Average Rent</h3>
-          <p className="text-2xl font-semibold">
-            {averageRent ? `AED ${Math.round(averageRent).toLocaleString()}` : '—'}
-          </p>
+        <div className="bg-gray-700/50 p-4 rounded-lg">
+          <h3 className="text-sm text-gray-400">Average Rent</h3>
+          <p className="text-2xl font-semibold">AED {averageRent.toLocaleString()}</p>
         </div>
       </div>
 
-      {/* Units Table */}
-      <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-700">
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Unit No.</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Contract End</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Days Vacant</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Last Known Rent</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-700">
-              {tower.units.map((unit) => (
-                <tr key={unit.unit_no} className="hover:bg-gray-700/50 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    {unit.unit_no}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        unit.status.includes('Vacant')
-                          ? 'bg-red-500/20 text-red-300'
-                          : unit.status.includes('Rented')
-                          ? 'bg-green-500/20 text-green-300'
-                          : 'bg-yellow-500/20 text-yellow-300'
-                      }`}
-                    >
-                      {unit.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                    {unit.last_contract_end_date || '—'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                    {unit.days_vacant ? `${unit.days_vacant} days` : '—'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                    {unit.last_known_rent ? `AED ${unit.last_known_rent.toLocaleString()}` : '—'}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      {/* Units Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {tower.units.map((unit) => (
+          <div
+            key={unit.unit}
+            className="bg-gray-700/50 p-4 rounded-lg"
+          >
+            <div className="flex justify-between items-start mb-2">
+              <h3 className="font-medium">Unit {unit.unit}</h3>
+              <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                unit.status === 'Vacant' ? 'bg-green-400/20 text-green-400' : 'bg-blue-400/20 text-blue-400'
+              }`}>
+                {unit.status}
+              </span>
+            </div>
+            <div className="space-y-1 text-sm text-gray-400">
+              <p>Floor {unit.floor}</p>
+              <p>{unit.type}</p>
+              {unit.rent && (
+                <p className="text-white">AED {unit.rent.toLocaleString()}</p>
+              )}
+            </div>
+          </div>
+        ))}
       </div>
-    </main>
+    </div>
   );
 }

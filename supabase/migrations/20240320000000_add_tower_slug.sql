@@ -7,15 +7,12 @@ RETURNS TEXT AS $$
 BEGIN
   RETURN LOWER(
     REGEXP_REPLACE(
-      REGEXP_REPLACE(
-        REGEXP_REPLACE(name, '[^a-zA-Z0-9\s-]', '', 'g'),
-        '\s+', '-', 'g'
-      ),
-      '-+', '-', 'g'
+      REGEXP_REPLACE(name, '[^a-zA-Z0-9\s-]', '', 'g'),
+      '\s+', '-', 'g'
     )
   );
 END;
-$$ LANGUAGE plpgsql IMMUTABLE;
+$$ LANGUAGE plpgsql;
 
 -- Update existing rows with generated slugs
 UPDATE vacant_units
