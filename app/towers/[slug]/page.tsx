@@ -25,7 +25,7 @@ type VacantUnit = {
   status: string;
 };
 
-export default async function TowerPage({ params }: { params: { slug: string } }) {
+export default async function TowerPage({ params }: { params: { tower: string } }) {
   const cookieStore = cookies();
   const supabase = createClient(cookieStore);
 
@@ -33,7 +33,7 @@ export default async function TowerPage({ params }: { params: { slug: string } }
   const { data: units, error } = await supabase
     .from('vacant_units')
     .select('*')
-    .eq('tower_slug', params.slug)
+    .eq('tower_slug', params.tower)
     .order('unit_no');
 
   if (error) {
