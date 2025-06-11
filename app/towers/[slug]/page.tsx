@@ -1,6 +1,7 @@
 import { createClient } from '@/utils/supabase/server';
 import { cookies } from 'next/headers';
 import { DownloadButton } from './DownloadButton';
+import { isValidSlug, slugToName } from '@/utils/slug';
 
 type Unit = {
   unit_no: string;
@@ -15,14 +16,17 @@ type Tower = {
   units: Unit[];
 };
 
-function createSlug(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '');
-}
-
 export default async function TowerPage({ params }: { params: { slug: string } }) {
+  // Validate the slug format
+  if (!isValidSlug(params.slug)) {
+    return (
+      <div className="p-8 text-white">
+        <h1 className="text-2xl font-bold mb-4">Invalid Tower URL</h1>
+        <p>The tower URL format is invalid.</p>
+      </div>
+    );
+  }
+
   const cookieStore = cookies();
   const supabase = createClient(cookieStore);
 
