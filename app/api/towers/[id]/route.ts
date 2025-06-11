@@ -4,7 +4,7 @@ import { dataService } from '@/lib/services/data-service';
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
-) {
+): Promise<Response> {
   try {
     const tower = await dataService.getTowerBySlug(params.id);
     
