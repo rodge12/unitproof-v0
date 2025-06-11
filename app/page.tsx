@@ -67,6 +67,7 @@ async function TowerListLoader() {
 
 export const dynamic = 'force-dynamic';
 
+// Home page component - displays the main landing page with tower listings
 export default async function Home() {
   const supabase = createServerClient();
   
