@@ -4,8 +4,91 @@ import { TowerGrid } from "@/components/towers/tower-grid"
 import { ReviewsSection } from "@/components/reviews-section"
 import { LeadForm } from "@/components/forms/lead-form"
 import { Footer } from "@/components/footer"
+import { createClient } from '@/utils/supabase/server';
+import { cookies } from 'next/headers';
+import Link from 'next/link';
+import { createSlug } from '@/utils/slug';
+import { TowerList } from '@/components/tower-list';
+import { Suspense } from 'react';
+import { TowerListRealtime } from '@/components/tower-list-realtime';
 
-export default function HomePage() {
+type TowerData = {
+  tower_name: string;
+  unit_no: string;
+};
+
+type TowerCounts = Record<string, number>;
+
+type ProcessedTower = {
+  name: string;
+  vacantUnits: number;
+};
+
+async function TowerListLoader() {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+
+  // Fetch all unique tower names and their vacant unit counts
+  const { data: towers, error } = await supabase
+    .from('vacant_units')
+    .select('tower_name, unit_no')
+    .order('tower_name');
+
+  if (error) {
+    console.error('Error fetching towers:', error);
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-2xl font-bold mb-4">Error Loading Towers</h1>
+        <p className="text-red-500">Failed to load tower data. Please try again later.</p>
+      </div>
+    );
+  }
+
+  // Process the data to get unique towers with vacant unit counts
+  const towerCounts = (towers as TowerData[]).reduce((acc: TowerCounts, { tower_name }: { tower_name: string }) => {
+    acc[tower_name] = (acc[tower_name] || 0) + 1;
+    return acc;
+  }, {});
+
+  const towerData: ProcessedTower[] = Object.entries(towerCounts).map(([name, vacantUnits]) => ({
+    name,
+    vacantUnits
+  }));
+
+  return <TowerList towers={towerData} />;
+}
+
+export default async function HomePage() {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+
+  // Fetch all unique tower names and their vacant unit counts
+  const { data: towers, error } = await supabase
+    .from('vacant_units')
+    .select('tower_name, unit_no')
+    .order('tower_name');
+
+  if (error) {
+    console.error('Error fetching towers:', error);
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-2xl font-bold mb-4">Error Loading Towers</h1>
+        <p className="text-red-500">Failed to load tower data. Please try again later.</p>
+      </div>
+    );
+  }
+
+  // Process the data to get unique towers with vacant unit counts
+  const towerCounts = (towers as TowerData[]).reduce((acc: TowerCounts, { tower_name }: { tower_name: string }) => {
+    acc[tower_name] = (acc[tower_name] || 0) + 1;
+    return acc;
+  }, {});
+
+  const towerData: ProcessedTower[] = Object.entries(towerCounts).map(([name, vacantUnits]) => ({
+    name,
+    vacantUnits
+  }));
+
   return (
     <div className="min-h-screen bg-gray-900">
       <Header />
@@ -37,6 +120,23 @@ export default function HomePage() {
       </section>
 
       <Footer />
+
+      <main className="p-4 md:p-8 text-white">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-3xl md:text-4xl font-bold mb-8">Tower Directory</h1>
+          
+          <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
+            <div className="p-6">
+              <h2 className="text-xl font-semibold mb-4">Available Towers</h2>
+              <TowerListRealtime />
+            </div>
+          </div>
+
+          <div className="mt-8 text-gray-400 text-sm">
+            <p>Total Towers: {towerData.length}</p>
+          </div>
+        </div>
+      </main>
     </div>
   )
 }

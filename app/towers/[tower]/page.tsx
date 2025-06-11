@@ -136,56 +136,52 @@ export default async function TowerPage({ params }: { params: { tower: string } 
         </div>
       </div>
 
-      {/* Units Grid */}
-      <div className="grid gap-4 md:gap-6">
-        {tower.units.map((unit) => (
-          <div
-            key={unit.unit_no}
-            className="bg-gray-800 rounded-lg border border-gray-700 shadow-lg hover:shadow-xl transition-shadow"
-          >
-            <div className="p-4 md:p-6">
-              {/* Unit Header */}
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-4 pb-4 border-b border-gray-700">
-                <h3 className="text-lg md:text-xl font-semibold">Unit {unit.unit_no}</h3>
-                <span
-                  className={`inline-block px-3 py-1.5 rounded-full text-sm font-medium ${
-                    unit.status.includes('Vacant')
-                      ? 'bg-red-500/20 text-red-300'
-                      : unit.status.includes('Rented')
-                      ? 'bg-green-500/20 text-green-300'
-                      : 'bg-yellow-500/20 text-yellow-300'
-                  }`}
-                >
-                  {unit.status}
-                </span>
-              </div>
-
-              {/* Unit Details */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-sm text-gray-400 font-medium mb-1">Contract End Date</p>
-                    <p className="text-gray-200">{unit.last_contract_end_date || '—'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-400 font-medium mb-1">Days Vacant</p>
-                    <p className="text-gray-200">
-                      {unit.days_vacant ? `${unit.days_vacant} days` : '—'}
-                    </p>
-                  </div>
-                </div>
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-sm text-gray-400 font-medium mb-1">Last Known Rent</p>
-                    <p className="text-gray-200">
-                      {unit.last_known_rent ? `AED ${unit.last_known_rent.toLocaleString()}` : '—'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
+      {/* Units Table */}
+      <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-gray-700">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Unit No.</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Contract End</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Days Vacant</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Last Known Rent</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-700">
+              {tower.units.map((unit) => (
+                <tr key={unit.unit_no} className="hover:bg-gray-700/50 transition-colors">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    {unit.unit_no}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <span
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        unit.status.includes('Vacant')
+                          ? 'bg-red-500/20 text-red-300'
+                          : unit.status.includes('Rented')
+                          ? 'bg-green-500/20 text-green-300'
+                          : 'bg-yellow-500/20 text-yellow-300'
+                      }`}
+                    >
+                      {unit.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                    {unit.last_contract_end_date || '—'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                    {unit.days_vacant ? `${unit.days_vacant} days` : '—'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                    {unit.last_known_rent ? `AED ${unit.last_known_rent.toLocaleString()}` : '—'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </main>
   );
