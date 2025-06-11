@@ -2,7 +2,6 @@
 
 import { useState, ChangeEvent } from 'react';
 import Link from 'next/link';
-import { createSlug } from '@/utils/slug';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Building2, Search } from 'lucide-react';
@@ -12,6 +11,7 @@ const FLAGSHIP_TOWER = "Paramount Tower Hotel & Residences, Business Bay";
 type Tower = {
   name: string;
   vacantUnits: number;
+  slug: string;
 };
 
 type TowerListProps = {
@@ -127,7 +127,7 @@ export function TowerList({ towers, isLoading = false }: TowerListProps) {
             return (
               <Link
                 key={tower.name}
-                href={`/towers/${createSlug(tower.name)}`}
+                href={`/towers/${tower.slug}`}
                 className={`block p-4 rounded-lg hover:bg-gray-700 transition-colors bg-gray-700/50 relative ${isFlagship ? 'ring-2 ring-yellow-400 ring-offset-2 shadow-lg shadow-yellow-400/30 animate-pulse-slow' : ''}`}
               >
                 <div className="flex items-center gap-2 mb-1">

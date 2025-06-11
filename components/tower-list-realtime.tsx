@@ -7,21 +7,30 @@ import { TowerList } from "./tower-list";
 type Tower = {
   name: string;
   vacantUnits: number;
+  slug: string;
 };
 
 async function fetchTowerData(supabase: ReturnType<typeof createClient>): Promise<Tower[]> {
   const { data, error } = await supabase
     .from("vacant_units")
-    .select("tower_name, unit_no");
+    .select("tower_name, tower_slug, unit_no");
   if (error) {
     throw error;
   }
   // Group and count vacant units by tower_name
-  const towerCounts = (data as { tower_name: string; unit_no: string }[]).reduce((acc, { tower_name }) => {
-    acc[tower_name] = (acc[tower_name] || 0) + 1;
+  const towerCounts = (data as { tower_name: string; tower_slug: string; unit_no: string }[]).reduce((acc, { tower_name, tower_slug }) => {
+    if (!acc[tower_name]) {
+      acc[tower_name] = { count: 0, slug: tower_slug };
+    }
+    acc[tower_name].count += 1;
     return acc;
-  }, {} as Record<string, number>);
-  return Object.entries(towerCounts).map(([name, vacantUnits]) => ({ name, vacantUnits }));
+  }, {} as Record<string, { count: number; slug: string }>);
+
+  return Object.entries(towerCounts).map(([name, { count, slug }]) => ({
+    name,
+    vacantUnits: count,
+    slug
+  }));
 }
 
 export function TowerListRealtime() {
