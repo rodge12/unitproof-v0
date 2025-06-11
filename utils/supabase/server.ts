@@ -10,10 +10,17 @@ export function createSupabaseClient(supabaseUrl: string, supabaseKey: string) {
 }
 
 export function createServerClient() {
-  const cookieStore = cookies();
-  
-  return createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  try {
+    const cookieStore = cookies();
+    return createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+  } catch (error) {
+    // If cookies() fails (during static generation), return a client without cookies
+    return createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+  }
 } 

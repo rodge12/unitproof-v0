@@ -19,15 +19,20 @@ type Tower = {
 };
 
 export async function generateStaticParams() {
-  const supabase = createServerClient();
-  const { data: units } = await supabase
-    .from('vacant_units')
-    .select('tower_slug')
-    .distinct();
+  try {
+    const supabase = createServerClient();
+    const { data: units } = await supabase
+      .from('vacant_units')
+      .select('tower_slug')
+      .distinct();
 
-  return units?.map((unit) => ({
-    tower: unit.tower_slug,
-  })) || [];
+    return units?.map((unit) => ({
+      tower: unit.tower_slug,
+    })) || [];
+  } catch (error) {
+    console.error('Error generating static params:', error);
+    return []; // Return empty array if there's an error during static generation
+  }
 }
 
 export default async function TowerPage({
