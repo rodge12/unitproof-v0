@@ -8,16 +8,15 @@ import { Badge } from "@/components/ui/badge";
 import { DownloadButton } from '../towers/[tower]/DownloadButton';
 
 type Unit = {
-  unit: string;
+  unit_no: string;
   status: string;
-  lastContractEndDate: string;
-  daysVacant: number | null;
-  rent: number | null;
+  last_contract_end_date: string;
+  days_vacant: number | null;
+  last_known_rent: number | null;
 };
 
 type Tower = {
-  tower: string;
-  slug: string;
+  tower_name: string;
   units: Unit[];
 };
 
@@ -52,12 +51,12 @@ export function DataPreview({ initialData }: DataPreviewProps) {
     if (!initialData || !Array.isArray(initialData)) return [];
     
     return initialData
-      .filter(tower => selectedTower === 'all' || tower.slug === selectedTower)
+      .filter(tower => selectedTower === 'all' || tower.tower_name === selectedTower)
       .map(tower => ({
         ...tower,
         units: (tower.units || []).filter(unit => {
           const matchesSearch = 
-            (unit.unit?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+            (unit.unit_no?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
             (unit.status?.toLowerCase() || '').includes(searchQuery.toLowerCase());
           const matchesStatus = statusFilter === 'all' || unit.status === statusFilter;
           return matchesSearch && matchesStatus;
@@ -105,8 +104,8 @@ export function DataPreview({ initialData }: DataPreviewProps) {
           <SelectContent>
             <SelectItem value="all">All Towers</SelectItem>
             {initialData.map(tower => (
-              <SelectItem key={tower.slug} value={tower.slug}>
-                {tower.tower}
+              <SelectItem key={tower.tower_name} value={tower.tower_name}>
+                {tower.tower_name}
               </SelectItem>
             ))}
           </SelectContent>
@@ -121,20 +120,20 @@ export function DataPreview({ initialData }: DataPreviewProps) {
       {/* Towers */}
       <div className="space-y-6">
         {filteredData.map(tower => (
-          <Card key={tower.slug} className="bg-gray-800 border-gray-700">
+          <Card key={tower.tower_name} className="bg-gray-800 border-gray-700">
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-xl">{tower.tower}</CardTitle>
+              <CardTitle className="text-xl">{tower.tower_name}</CardTitle>
               <DownloadButton tower={tower} />
             </CardHeader>
             <CardContent>
               <div className="grid gap-4">
                 {tower.units.map(unit => (
                   <div
-                    key={unit.unit}
+                    key={unit.unit_no}
                     className="bg-gray-700/50 rounded-lg p-4 grid grid-cols-1 md:grid-cols-3 gap-4"
                   >
                     <div>
-                      <h4 className="font-semibold">Unit {unit.unit}</h4>
+                      <h4 className="font-semibold">Unit {unit.unit_no}</h4>
                       <Badge
                         className={`mt-2 ${
                           unit.status.includes('Vacant')
@@ -150,18 +149,18 @@ export function DataPreview({ initialData }: DataPreviewProps) {
                     <div className="text-gray-300">
                       <p>
                         <span className="font-medium">Contract End:</span>{' '}
-                        {unit.lastContractEndDate || '—'}
+                        {unit.last_contract_end_date || '—'}
                       </p>
                       <p>
                         <span className="font-medium">Days Vacant:</span>{' '}
-                        {unit.daysVacant ? `${unit.daysVacant} days` : '—'}
+                        {unit.days_vacant ? `${unit.days_vacant} days` : '—'}
                       </p>
                     </div>
                     <div className="text-gray-300">
                       <p>
                         <span className="font-medium">Last Known Rent:</span>{' '}
-                        {unit.rent
-                          ? `AED ${unit.rent.toLocaleString()}`
+                        {unit.last_known_rent
+                          ? `AED ${unit.last_known_rent.toLocaleString()}`
                           : '—'}
                       </p>
                     </div>

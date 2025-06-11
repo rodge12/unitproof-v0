@@ -5,16 +5,15 @@ import { Download } from "lucide-react";
 import * as XLSX from 'xlsx';
 
 type Unit = {
-  unit: string;
+  unit_no: string;
   status: string;
-  lastContractEndDate: string;
-  daysVacant: number | null;
-  rent: number | null;
+  last_contract_end_date: string;
+  days_vacant: number | null;
+  last_known_rent: number | null;
 };
 
 type Tower = {
-  tower: string;
-  slug: string;
+  tower_name: string;
   units: Unit[];
 };
 
@@ -22,11 +21,11 @@ export function DownloadButton({ tower }: { tower: Tower }) {
   const handleDownload = () => {
     // Prepare data for Excel
     const data = tower.units.map(unit => ({
-      'Unit No.': unit.unit,
+      'Unit No.': unit.unit_no,
       'Status': unit.status,
-      'Contract End Date': unit.lastContractEndDate || '',
-      'Days Vacant': unit.daysVacant || '',
-      'Last Known Rent': unit.rent ? `AED ${unit.rent.toLocaleString()}` : ''
+      'Contract End Date': unit.last_contract_end_date || '',
+      'Days Vacant': unit.days_vacant || '',
+      'Last Known Rent': unit.last_known_rent ? `AED ${unit.last_known_rent.toLocaleString()}` : ''
     }));
 
     // Create worksheet
@@ -37,7 +36,7 @@ export function DownloadButton({ tower }: { tower: Tower }) {
     XLSX.utils.book_append_sheet(wb, ws, 'Units');
 
     // Generate Excel file
-    XLSX.writeFile(wb, `${tower.tower} - Units.xlsx`);
+    XLSX.writeFile(wb, `${tower.tower_name} - Units.xlsx`);
   };
 
   return (
