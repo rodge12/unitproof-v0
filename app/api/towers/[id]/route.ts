@@ -1,9 +1,15 @@
 import { NextRequest } from 'next/server';
 import { dataService } from '@/lib/services/data-service';
 
+type RouteParams = {
+  params: {
+    id: string;
+  };
+};
+
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: RouteParams
 ): Promise<Response> {
   try {
     const tower = await dataService.getTowerBySlug(params.id);
