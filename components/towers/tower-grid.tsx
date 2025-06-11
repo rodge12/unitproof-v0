@@ -91,7 +91,7 @@ export function TowerGrid() {
   // Initial load and filter changes
   useEffect(() => {
     fetchTowers(1, true)
-  }, [filters, sortBy])
+  }, [fetchTowers])
 
   // Handle filter changes
   const handleFiltersChange = (newFilters: FilterOptions) => {

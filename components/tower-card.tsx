@@ -11,6 +11,7 @@ import { LoginModal } from "@/components/login-modal"
 import { ExportModal } from "@/components/export-modal"
 import { WhatsAppModal } from "@/components/whatsapp-modal"
 import type { Tower } from "@/lib/sample-data"
+import Image from 'next/image'
 
 interface TowerCardProps {
   tower: Tower
@@ -133,10 +134,12 @@ export function TowerCard({ tower }: TowerCardProps) {
           )}
 
           <div className="aspect-video bg-gray-700 rounded-lg mb-3 overflow-hidden">
-            <img
-              src="/placeholder.svg?height=200&width=300"
+            <Image
+              src={tower.image_url}
               alt={tower.name}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              width={400}
+              height={300}
+              className="w-full h-48 object-cover rounded-t-lg"
             />
           </div>
           <h3 className="text-lg font-semibold text-white group-hover:text-cyan-400 transition-colors">{tower.name}</h3>
