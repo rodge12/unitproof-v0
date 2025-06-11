@@ -23,12 +23,14 @@ export async function generateStaticParams() {
     const supabase = createServerClient();
     const { data: units } = await supabase
       .from('vacant_units')
-      .select('tower_slug')
-      .distinct();
+      .select('tower_slug');
 
-    return units?.map((unit) => ({
-      tower: unit.tower_slug,
-    })) || [];
+    // Get unique tower slugs
+    const uniqueTowers = Array.from(new Set(units?.map(u => u.tower_slug) || []));
+    
+    return uniqueTowers.map(tower => ({
+      tower,
+    }));
   } catch (error) {
     console.error('Error generating static params:', error);
     return []; // Return empty array if there's an error during static generation
@@ -53,7 +55,8 @@ export default async function TowerPage({
   // Calculate summary statistics
   const total_units = units.length;
   const vacant_units = units.filter(unit => unit.status === 'Vacant').length;
-  const rented_units = total_units - vacant_units;
+  const becoming_vacant_units = units.filter(unit => unit.status === 'Becoming Vacant in 30 Days').length;
+  const rented_units = total_units - vacant_units - becoming_vacant_units;
   const average_rent = Math.round(
     units.reduce((sum, unit) => sum + (unit.last_known_rent || 0), 0) / total_units
   );
@@ -76,7 +79,7 @@ export default async function TowerPage({
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">{tower.name}</h1>
-        <DownloadButton units={tower.units} />
+        <DownloadButton tower={tower} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -86,11 +89,11 @@ export default async function TowerPage({
         </div>
         <div className="bg-white p-4 rounded-lg shadow">
           <h3 className="text-sm font-medium text-gray-500">Vacant Units</h3>
-          <p className="text-2xl font-semibold text-blue-600">{tower.vacant_units}</p>
+          <p className="text-2xl font-semibold text-red-600">{tower.vacant_units}</p>
         </div>
         <div className="bg-white p-4 rounded-lg shadow">
-          <h3 className="text-sm font-medium text-gray-500">Rented Units</h3>
-          <p className="text-2xl font-semibold text-green-600">{tower.rented_units}</p>
+          <h3 className="text-sm font-medium text-gray-500">Becoming Vacant</h3>
+          <p className="text-2xl font-semibold text-yellow-600">{becoming_vacant_units}</p>
         </div>
         <div className="bg-white p-4 rounded-lg shadow">
           <h3 className="text-sm font-medium text-gray-500">Average Rent</h3>

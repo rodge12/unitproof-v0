@@ -17,11 +17,23 @@ export interface Unit {
 
 export type Tower = {
   name: string;
+  area: string;
   slug: string;
-  area?: string;
   total_units: number;
   vacant_units: number;
   average_rent: number;
+};
+
+export type Unit = {
+  id: string;
+  unit_number: string;
+  contract_end_date: string;
+  days_vacant: number;
+  last_known_rent: number;
+  status: 'Vacant' | 'Tenanted' | 'For Sale' | 'Long Vacant';
+};
+
+export type TowerWithUnits = Tower & {
   units: Unit[];
 };
 
