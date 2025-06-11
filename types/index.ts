@@ -15,23 +15,15 @@ export interface Unit {
   floorNumber?: number
 }
 
-export type Tower = {
+export interface Tower {
+  id: string;
   name: string;
-  area: string;
-  slug: string;
+  image_url: string;
   total_units: number;
   vacant_units: number;
   average_rent: number;
-};
-
-export type Unit = {
-  id: string;
-  unit_number: string;
-  contract_end_date: string;
-  days_vacant: number;
-  last_known_rent: number;
-  status: 'Vacant' | 'Tenanted' | 'For Sale' | 'Long Vacant';
-};
+  area: string;
+}
 
 export type TowerWithUnits = Tower & {
   units: Unit[];
@@ -90,3 +82,28 @@ export type TowerListResponse = {
   stats: GlobalStats;
   pagination: PaginationOptions;
 };
+
+export interface UserContextType {
+  isAuthenticated: boolean;
+  userRole: 'free' | 'paid';
+  login: () => void;
+  logout: () => void;
+}
+
+export interface LeadData {
+  name: string;
+  email: string;
+  phone: string;
+  message: string;
+}
+
+export interface TowerFiltersProps {
+  filters: {
+    area: string[];
+    minRent: number;
+    maxRent: number;
+    status: string[];
+  };
+  onFiltersChange: (filters: any) => void;
+  onFiltersReset: () => void;
+}

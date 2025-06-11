@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Building, MapPin, Users, Eye, Lock, DollarSign } from "lucide-react"
@@ -10,18 +10,21 @@ import { useUser } from "@/contexts/user-context"
 import { LoginModal } from "@/components/login-modal"
 import { ExportModal } from "@/components/export-modal"
 import { WhatsAppModal } from "@/components/whatsapp-modal"
-import type { Tower } from "@/lib/sample-data"
+import type { Tower } from "@/types"
 import Image from 'next/image'
+import { LeadModal } from "@/components/lead-modal"
 
 interface TowerCardProps {
   tower: Tower
+  onLeadSubmit: (towerId: string, data: any) => void
 }
 
-export function TowerCard({ tower }: TowerCardProps) {
+export function TowerCard({ tower, onLeadSubmit }: TowerCardProps) {
   const [showUnits, setShowUnits] = useState(false)
   const [showLogin, setShowLogin] = useState(false)
   const [showExport, setShowExport] = useState(false)
   const [showWhatsApp, setShowWhatsApp] = useState(false)
+  const [showLeadModal, setShowLeadModal] = useState(false)
   const [towerData, setTowerData] = useState<Tower | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
@@ -87,121 +90,63 @@ export function TowerCard({ tower }: TowerCardProps) {
     setShowExport(true)
   }
 
+  const handleLeadSubmit = (data: any) => {
+    onLeadSubmit(tower.id, data)
+    setShowLeadModal(false)
+  }
+
   return (
     <>
-      <Card className="bg-gray-800 border-gray-700 hover:border-cyan-400 transition-all duration-300 group">
-        {/* Vacancy Stats */}
-        <div className="bg-gray-900/80 p-3 border-b border-gray-700">
-          <div className="grid grid-cols-3 gap-2 text-center">
-            <div>
-              <p className="text-xs text-gray-400">Vacant Units</p>
-              <p className="text-lg font-semibold text-cyan-400">{vacantUnits}</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-400">Avg. Rent</p>
-              <p className="text-lg font-semibold text-green-400">
-                {averageRent > 0 ? `${(averageRent / 1000).toFixed(0)}K` : "N/A"}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-400">Rent Loss</p>
-              <p className="text-lg font-semibold text-yellow-400">
-                {totalRentLoss > 0 ? `${(totalRentLoss / 1000000).toFixed(1)}M` : "N/A"}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <CardHeader className="pb-3 relative">
-          {/* Access Control Overlay */}
-          {(!isAuthenticated ||
-            (userRole === "free" &&
-              localStorage.getItem("unitproof_viewed_tower") &&
-              localStorage.getItem("unitproof_viewed_tower") !== tower.id)) && (
-            <div className="absolute inset-0 bg-gray-900/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center p-4 rounded-t-lg">
-              <Lock className="w-10 h-10 text-cyan-400 mb-2" />
-              <h3 className="text-white text-lg font-semibold text-center mb-1">Premium Content</h3>
-              <p className="text-gray-300 text-sm text-center mb-3">
-                {isAuthenticated ? "Upgrade to access all towers" : "Sign in to unlock this tower"}
-              </p>
-              <Button
-                onClick={() => setShowLogin(true)}
-                className="bg-gradient-to-r from-cyan-500 to-green-500 hover:from-cyan-600 hover:to-green-600 text-white"
-              >
-                {isAuthenticated ? "Upgrade Now" : "Sign In"}
-              </Button>
-            </div>
-          )}
-
+      <Card className="group hover:shadow-lg transition-shadow duration-300">
+        <CardHeader>
           <div className="aspect-video bg-gray-700 rounded-lg mb-3 overflow-hidden">
             <Image
-              src={tower.image_url}
+              src={tower.image_url || "/placeholder.svg"}
               alt={tower.name}
               width={400}
               height={300}
-              className="w-full h-48 object-cover rounded-t-lg"
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             />
           </div>
-          <h3 className="text-lg font-semibold text-white group-hover:text-cyan-400 transition-colors">{tower.name}</h3>
-          <div className="flex items-center text-gray-400 text-sm">
-            <MapPin className="w-4 h-4 mr-1" />
-            {tower.area}
-          </div>
+          <CardTitle className="text-xl font-bold">{tower.name}</CardTitle>
         </CardHeader>
-
-        <CardContent className="space-y-3">
-          <div className="flex items-center justify-between text-sm">
-            <div className="flex items-center text-gray-300">
-              <Building className="w-4 h-4 mr-1" />
-              {tower.totalUnits} Units
+        <CardContent>
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-500">Total Units</span>
+              <span className="font-medium">{tower.total_units}</span>
             </div>
-            <div className="flex items-center text-gray-300">
-              <Users className="w-4 h-4 mr-1" />
-              {tower.totalUnits - vacantUnits} Occupied
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-500">Vacant Units</span>
+              <span className="font-medium">{tower.vacant_units}</span>
             </div>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            <Badge variant="secondary" className="bg-gray-700 text-gray-300">
-              {vacantUnits} Vacant
-            </Badge>
-            {longVacantUnits > 0 && (
-              <Badge variant="destructive" className="bg-red-900 text-red-300">
-                {longVacantUnits} Long Vacant
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-500">Average Rent</span>
+              <span className="font-medium">AED {tower.average_rent.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-500">Status</span>
+              <Badge variant={tower.vacant_units > 0 ? "default" : "secondary"}>
+                {tower.vacant_units > 0 ? "Available" : "Fully Occupied"}
               </Badge>
-            )}
+            </div>
           </div>
-
-          <div className="grid grid-cols-2 gap-2 pt-2">
-            <Button
-              onClick={handleViewUnits}
-              disabled={isLoading}
-              className="bg-gradient-to-r from-cyan-600 to-green-600 hover:from-cyan-700 hover:to-green-700 text-white"
-            >
-              <Eye className="w-4 h-4 mr-2" />
-              View Units
-            </Button>
-            <Button
-              onClick={handleRequestList}
-              variant="outline"
-              className="border-gray-600 text-white hover:bg-gray-700"
-            >
-              <DollarSign className="w-4 h-4 mr-2" />
-              Request List
-            </Button>
-          </div>
-
-          {/* Export Button - Only for paid users */}
-          {isAuthenticated && userRole === "paid" && (
-            <Button
-              onClick={handleExport}
-              variant="outline"
-              className="w-full border-gray-600 text-white hover:bg-gray-700"
-            >
-              Export Data
-            </Button>
-          )}
         </CardContent>
+        <CardFooter className="flex gap-2">
+          <Button 
+            variant="outline" 
+            className="flex-1"
+            onClick={() => setShowLeadModal(true)}
+          >
+            Contact Agent
+          </Button>
+          <Button 
+            className="flex-1"
+            onClick={() => setShowWhatsApp(true)}
+          >
+            WhatsApp
+          </Button>
+        </CardFooter>
       </Card>
 
       {/* Modals */}
@@ -219,6 +164,13 @@ export function TowerCard({ tower }: TowerCardProps) {
       <ExportModal isOpen={showExport} onClose={() => setShowExport(false)} tower={tower} />
 
       <WhatsAppModal isOpen={showWhatsApp} onClose={() => setShowWhatsApp(false)} towerName={tower.name} />
+
+      <LeadModal
+        isOpen={showLeadModal}
+        onClose={() => setShowLeadModal(false)}
+        onSubmit={handleLeadSubmit}
+        towerName={tower.name}
+      />
     </>
   )
 }
