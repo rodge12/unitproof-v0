@@ -18,41 +18,38 @@ export interface Unit {
 export type Tower = {
   name: string;
   slug: string;
-  vacant_units: number;
+  area?: string;
   total_units: number;
+  vacant_units: number;
   average_rent: number;
-  units: Array<{
-    number: string;
-    type: string;
-    rentPrice?: number;
-    status: string;
-    daysVacant?: number;
-    contractEndDate?: string;
-  }>;
+  units: Unit[];
 };
 
-export interface FilterOptions {
-  search: string
-  area: string
-  unitType: string
-  vacancyStatus: string
-  daysVacant: string
-  priceRange: { min: number; max: number }
-}
+export type FilterOptions = {
+  search: string;
+  area: string;
+  unitType: string;
+  vacancyStatus: string;
+  daysVacant: string;
+  priceRange: {
+    min: number;
+    max: number;
+  };
+};
 
-export interface GlobalStats {
-  totalVacantUnits: number
-  averageRent: number
-  totalRentLoss: number
-  totalTowers: number
-  occupancyRate: number
-}
+export type GlobalStats = {
+  totalVacantUnits: number;
+  averageRent: number;
+  totalRentLoss: number;
+  totalTowers: number;
+  occupancyRate: number;
+};
 
-export interface PaginationOptions {
-  page: number
-  limit: number
-  total: number
-}
+export type PaginationOptions = {
+  page: number;
+  limit: number;
+  total: number;
+};
 
 // User and subscription types
 export type UserRole = "free" | "premium" | "admin"
@@ -69,13 +66,15 @@ export interface User {
 }
 
 // API response types - ready for backend
-export interface ApiResponse<T> {
-  data: T
-  success: boolean
-  message?: string
-  pagination?: PaginationOptions
-}
+export type ApiResponse<T> = {
+  data: T;
+  success: boolean;
+  error?: string;
+};
 
-export interface TowerListResponse extends ApiResponse<Tower[]> {
-  stats: GlobalStats
-}
+export type TowerListResponse = {
+  data: Tower[];
+  success: boolean;
+  stats: GlobalStats;
+  pagination: PaginationOptions;
+};

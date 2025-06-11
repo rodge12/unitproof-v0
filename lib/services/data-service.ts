@@ -15,7 +15,7 @@ class DataService {
       const supabase = createClient();
       const { data: units, error } = await supabase
         .from('vacant_units')
-        .select('tower_name, tower_slug, unit_no, status, last_known_rent');
+        .select('tower_name, tower_slug, unit_no, status, last_known_rent, days_vacant, contract_end_date');
 
       if (error) {
         throw error;
@@ -40,12 +40,21 @@ class DataService {
         }
         
         const tower = towerMap.get(unit.tower_name)!;
+        tower.units.push({
+          number: unit.unit_no,
+          type: "Apartment", // Default type
+          rentPrice: unit.last_known_rent,
+          status: unit.status,
+          daysVacant: unit.days_vacant,
+          contractEndDate: unit.contract_end_date
+        });
+
         // Only count vacant and becoming vacant units
         if (unit.status === 'Vacant' || unit.status === 'Becoming Vacant in 30 Days') {
           tower.vacant_units++;
         }
         if (unit.last_known_rent) {
-          tower.average_rent = (tower.average_rent * (tower.total_units - 1) + unit.last_known_rent) / tower.total_units;
+          tower.average_rent = (tower.average_rent * (tower.units.length - 1) + unit.last_known_rent) / tower.units.length;
         }
       });
 
@@ -55,9 +64,13 @@ class DataService {
       const stats = {
         totalVacantUnits: towers.reduce((sum, tower) => sum + tower.vacant_units, 0),
         averageRent: Math.round(towers.reduce((sum, tower) => sum + tower.average_rent, 0) / towers.length),
-        totalRentLoss: 0, // TODO: Calculate based on vacant units and average rent
+        totalRentLoss: towers.reduce((sum, tower) => {
+          const vacantUnits = tower.units.filter(u => u.status === 'Vacant' || u.status === 'Becoming Vacant in 30 Days');
+          return sum + vacantUnits.reduce((unitSum, unit) => unitSum + (unit.rentPrice || tower.average_rent), 0);
+        }, 0),
         totalTowers: towers.length,
-        occupancyRate: 0 // TODO: Calculate based on total units and vacant units
+        occupancyRate: Math.round((towers.reduce((sum, tower) => sum + (tower.total_units - tower.vacant_units), 0) / 
+          towers.reduce((sum, tower) => sum + tower.total_units, 0)) * 100)
       };
 
       return {

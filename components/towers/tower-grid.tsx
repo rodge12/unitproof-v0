@@ -59,11 +59,11 @@ export function TowerGrid() {
         })
 
         // Find and set the featured tower (Paramount Tower)
-        const paramountTower = response.data.find(tower => tower.name === "Paramount Tower")
+        const paramountTower = response.data.find(tower => tower.name === "Paramount Tower Hotel & Residences, Business Bay")
         setFeaturedTower(paramountTower || null)
 
         // Filter out the featured tower from the main list
-        const otherTowers = response.data.filter(tower => tower.name !== "Paramount Tower")
+        const otherTowers = response.data.filter(tower => tower.name !== "Paramount Tower Hotel & Residences, Business Bay")
 
         if (resetData) {
           setTowers(otherTowers)
@@ -200,40 +200,20 @@ export function TowerGrid() {
         <TowerFilters
           filters={filters}
           onFiltersChange={handleFiltersChange}
-          onReset={handleFiltersReset}
-          isLoading={isLoading}
+          onFiltersReset={handleFiltersReset}
         />
 
-        {/* Sort and Results Info */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-          <div className="text-gray-400">
-            {isLoading ? (
-              <Skeleton className="h-5 w-48 bg-gray-700" />
-            ) : (
-              <span>
-                Showing {towers.length} of {pagination.total} towers
-                {filters.search && ` for "${filters.search}"`}
-              </span>
-            )}
-          </div>
-
-          <Select value={sortBy} onValueChange={handleSortChange} disabled={isLoading}>
-            <SelectTrigger className="w-48 bg-gray-800 border-gray-700 text-white">
+        {/* Sort Options */}
+        <div className="flex justify-end mb-6">
+          <Select value={sortBy} onValueChange={handleSortChange}>
+            <SelectTrigger className="w-[180px] bg-gray-800 border-gray-700 text-white">
               <SelectValue placeholder="Sort by" />
             </SelectTrigger>
-            <SelectContent className="bg-gray-800 border-gray-700">
-              <SelectItem value="name" className="text-white">
-                Name (A-Z)
-              </SelectItem>
-              <SelectItem value="area" className="text-white">
-                Area
-              </SelectItem>
-              <SelectItem value="vacancy-high" className="text-white">
-                Most Vacant
-              </SelectItem>
-              <SelectItem value="vacancy-low" className="text-white">
-                Least Vacant
-              </SelectItem>
+            <SelectContent>
+              <SelectItem value="name">Name (A-Z)</SelectItem>
+              <SelectItem value="name-desc">Name (Z-A)</SelectItem>
+              <SelectItem value="vacant">Most Vacant</SelectItem>
+              <SelectItem value="rent">Highest Rent</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -241,98 +221,57 @@ export function TowerGrid() {
         {/* Tower Grid */}
         {isLoading ? (
           <LoadingSkeleton />
-        ) : towers.length === 0 ? (
-          <div className="text-center py-12 bg-gray-800 rounded-lg border border-gray-700">
-            <h3 className="text-xl font-semibold text-white mb-2">No towers found</h3>
-            <p className="text-gray-400 mb-4">Try adjusting your search criteria or filters to see more results.</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {towers.map((tower) => (
+              <TowerCard
+                key={tower.slug}
+                tower={tower}
+                isPreview={false}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {!isLoading && towers.length > 0 && (
+          <div className="flex justify-center items-center gap-4 mt-8">
+            <Button
+              variant="outline"
+              onClick={() => handlePageChange(pagination.page - 1)}
+              disabled={pagination.page === 1}
+              className="border-gray-700 text-white hover:bg-gray-800"
+            >
+              <ChevronLeft className="w-4 h-4 mr-2" />
+              Previous
+            </Button>
+            <span className="text-white">
+              Page {pagination.page} of {Math.ceil(pagination.total / pagination.limit)}
+            </span>
+            <Button
+              variant="outline"
+              onClick={() => handlePageChange(pagination.page + 1)}
+              disabled={pagination.page >= Math.ceil(pagination.total / pagination.limit)}
+              className="border-gray-700 text-white hover:bg-gray-800"
+            >
+              Next
+              <ChevronRight className="w-4 h-4 ml-2" />
+            </Button>
+          </div>
+        )}
+
+        {/* No Results */}
+        {!isLoading && towers.length === 0 && (
+          <div className="text-center py-12">
+            <h3 className="text-xl font-semibold text-white mb-2">No Towers Found</h3>
+            <p className="text-gray-400 mb-4">Try adjusting your filters or search criteria.</p>
             <Button
               onClick={handleFiltersReset}
-              variant="outline"
-              className="border-gray-600 text-white hover:bg-gray-700"
+              className="bg-gradient-to-r from-cyan-500 to-green-500 hover:from-cyan-600 hover:to-green-600"
             >
               Reset Filters
             </Button>
           </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
-              {towers.map((tower, index) => (
-                <TowerCard
-                  key={tower.id}
-                  tower={tower}
-                  isPreview={!user && index < 2} // Show first 2 towers as preview for non-authenticated users
-                />
-              ))}
-            </div>
-
-            {/* Pagination */}
-            {pagination.total > pagination.limit && (
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="text-gray-400 text-sm">
-                  Page {pagination.page} of {Math.ceil(pagination.total / pagination.limit)}
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePageChange(pagination.page - 1)}
-                    disabled={pagination.page <= 1 || isLoading}
-                    className="border-gray-600 text-white hover:bg-gray-700"
-                  >
-                    <ChevronLeft className="w-4 h-4 mr-1" />
-                    Previous
-                  </Button>
-
-                  {/* Page numbers */}
-                  <div className="flex items-center gap-1">
-                    {Array.from({ length: Math.min(5, Math.ceil(pagination.total / pagination.limit)) }, (_, i) => {
-                      const totalPages = Math.ceil(pagination.total / pagination.limit)
-                      let pageNumber
-
-                      if (totalPages <= 5) {
-                        pageNumber = i + 1
-                      } else if (pagination.page <= 3) {
-                        pageNumber = i + 1
-                      } else if (pagination.page >= totalPages - 2) {
-                        pageNumber = totalPages - 4 + i
-                      } else {
-                        pageNumber = pagination.page - 2 + i
-                      }
-
-                      return (
-                        <Button
-                          key={pageNumber}
-                          variant={pagination.page === pageNumber ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => handlePageChange(pageNumber)}
-                          disabled={isLoading}
-                          className={
-                            pagination.page === pageNumber
-                              ? "bg-gradient-to-r from-cyan-500 to-green-500 text-white"
-                              : "border-gray-600 text-white hover:bg-gray-700"
-                          }
-                        >
-                          {pageNumber}
-                        </Button>
-                      )
-                    })}
-                  </div>
-
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePageChange(pagination.page + 1)}
-                    disabled={pagination.page >= Math.ceil(pagination.total / pagination.limit) || isLoading}
-                    className="border-gray-600 text-white hover:bg-gray-700"
-                  >
-                    Next
-                    <ChevronRight className="w-4 h-4 ml-1" />
-                  </Button>
-                </div>
-              </div>
-            )}
-          </>
         )}
       </div>
     </section>

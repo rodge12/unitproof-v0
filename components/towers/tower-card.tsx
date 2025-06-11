@@ -26,17 +26,17 @@ export function TowerCard({ tower, isPreview = false, isFeatured = false }: Towe
 
   const { user, profile, isLoading: authLoading } = useUser()
 
-  // Calculate tower statistics - always show these
-  const vacantUnits = tower.units.filter((unit) => unit.status === "vacant")
+  // Calculate tower statistics
+  const vacantUnits = tower.units.filter((unit) => unit.status === "Vacant")
+  const becomingVacantUnits = tower.units.filter((unit) => unit.status === "Becoming Vacant in 30 Days")
   const longVacantUnits = tower.units.filter(
-    (unit) => unit.status === "vacant" && unit.daysVacant && unit.daysVacant > 150,
+    (unit) => unit.status === "Vacant" && unit.daysVacant && unit.daysVacant > 150,
   )
-  const occupiedUnits = tower.units.filter((unit) => unit.status === "occupied")
+  const occupiedUnits = tower.units.filter((unit) => unit.status === "Rented")
 
-  // Calculate financial metrics - always show these
+  // Calculate financial metrics
   const rentPrices = tower.units.filter((unit) => unit.rentPrice).map((unit) => unit.rentPrice as number)
-  const averageRent =
-    rentPrices.length > 0 ? Math.round(rentPrices.reduce((sum, price) => sum + price, 0) / rentPrices.length) : 0
+  const averageRent = tower.average_rent || (rentPrices.length > 0 ? Math.round(rentPrices.reduce((sum, price) => sum + price, 0) / rentPrices.length) : 0)
   const totalRentLoss = vacantUnits.reduce((total, unit) => total + (unit.rentPrice || averageRent), 0)
 
   // Determine access level
@@ -58,7 +58,7 @@ export function TowerCard({ tower, isPreview = false, isFeatured = false }: Towe
     setIsLoading(true)
     try {
       // Fetch detailed tower data
-      const response = await fetch(`/api/towers/${tower.id}`)
+      const response = await fetch(`/api/towers/${tower.slug}`)
       if (!response.ok) throw new Error("Failed to fetch tower data")
 
       const data = await response.json()
@@ -91,7 +91,7 @@ export function TowerCard({ tower, isPreview = false, isFeatured = false }: Towe
             <div className="group/stat hover:scale-105 transition-transform">
               <p className="text-xs text-gray-400">Vacant</p>
               <p className="text-lg font-bold text-yellow-400 group-hover/stat:text-yellow-300 transition-colors">
-                {vacantUnits.length}
+                {vacantUnits.length + becomingVacantUnits.length}
               </p>
             </div>
             <div className="group/stat hover:scale-105 transition-transform">
@@ -129,7 +129,7 @@ export function TowerCard({ tower, isPreview = false, isFeatured = false }: Towe
           </h3>
           <div className="flex items-center text-gray-400 text-sm">
             <MapPin className="w-4 h-4 mr-1" />
-            {tower.area}
+            {tower.area || "Dubai"}
           </div>
         </CardHeader>
 
@@ -138,7 +138,7 @@ export function TowerCard({ tower, isPreview = false, isFeatured = false }: Towe
           <div className="flex items-center justify-between text-sm">
             <div className="flex items-center text-gray-300">
               <Building className="w-4 h-4 mr-1" />
-              {tower.totalUnits} Units
+              {tower.total_units} Units
             </div>
             <div className="flex items-center text-gray-300">
               <Users className="w-4 h-4 mr-1" />
@@ -153,12 +153,12 @@ export function TowerCard({ tower, isPreview = false, isFeatured = false }: Towe
               <span className="text-yellow-400 font-semibold">{vacantUnits.length}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-400">Long Vacant:</span>
-              <span className="text-red-400 font-semibold">{longVacantUnits.length}</span>
+              <span className="text-gray-400">Becoming Vacant:</span>
+              <span className="text-orange-400 font-semibold">{becomingVacantUnits.length}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-400">Occupied:</span>
-              <span className="text-green-400 font-semibold">{occupiedUnits.length}</span>
+              <span className="text-gray-400">Long Vacant:</span>
+              <span className="text-red-400 font-semibold">{longVacantUnits.length}</span>
             </div>
             <div className="border-t border-gray-700 pt-2 mt-2">
               <div className="flex justify-between text-sm">
@@ -184,6 +184,14 @@ export function TowerCard({ tower, isPreview = false, isFeatured = false }: Towe
             >
               {vacantUnits.length} Vacant
             </Badge>
+            {becomingVacantUnits.length > 0 && (
+              <Badge
+                variant="secondary"
+                className="bg-orange-900/50 text-orange-300 border border-orange-600 hover:bg-orange-900 transition-colors"
+              >
+                {becomingVacantUnits.length} Becoming Vacant
+              </Badge>
+            )}
             {longVacantUnits.length > 0 && (
               <Badge
                 variant="destructive"
@@ -193,7 +201,7 @@ export function TowerCard({ tower, isPreview = false, isFeatured = false }: Towe
               </Badge>
             )}
             <Badge className="bg-green-900/50 text-green-300 border border-green-600">
-              {Math.round((occupiedUnits.length / tower.totalUnits) * 100)}% Occupied
+              {Math.round((occupiedUnits.length / tower.total_units) * 100)}% Occupied
             </Badge>
           </div>
 
@@ -229,51 +237,53 @@ export function TowerCard({ tower, isPreview = false, isFeatured = false }: Towe
             </div>
           )}
 
-          {/* Action Buttons - Always Visible */}
-          <div className="grid grid-cols-2 gap-2 pt-2">
+          {/* Action Buttons */}
+          <div className="flex gap-2">
             <Button
               onClick={handleViewUnits}
-              disabled={isLoading || authLoading}
-              className="bg-gradient-to-r from-cyan-600 to-green-600 hover:from-cyan-700 hover:to-green-700 text-white transform hover:scale-105 transition-all duration-200 hover:shadow-lg hover:shadow-cyan-500/25"
+              disabled={isLoading}
+              className="flex-1 bg-gradient-to-r from-cyan-500 to-green-500 hover:from-cyan-600 hover:to-green-600"
             >
-              {isLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Eye className="w-4 h-4 mr-2" />}
-              {isLoading ? "Loading..." : isLocked ? "Sign In" : "View Units"}
+              {isLoading ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Eye className="w-4 h-4 mr-2" />
+              )}
+              View Units
             </Button>
             <Button
               onClick={handleRequestList}
               variant="outline"
-              className="border-gray-600 text-white hover:bg-gray-700 hover:border-cyan-400 transform hover:scale-105 transition-all duration-200"
+              className="flex-1 border-gray-600 hover:bg-gray-700"
             >
               <DollarSign className="w-4 h-4 mr-2" />
               Request List
             </Button>
           </div>
-
-          {/* Premium Export Button */}
-          {hasAccess && (
-            <Button
-              variant="outline"
-              className="w-full border-gray-600 text-white hover:bg-gray-700 hover:border-green-400 transform hover:scale-105 transition-all duration-200"
-            >
-              Export Data
-            </Button>
-          )}
         </CardContent>
       </Card>
 
       {/* Modals */}
-      {towerData && (
+      {showUnits && towerData && (
         <UnitModal
           tower={towerData}
-          isOpen={showUnits}
-          onClose={() => setShowUnits(false)}
-          onRequestList={handleRequestList}
+          open={showUnits}
+          onOpenChange={setShowUnits}
         />
       )}
-
-      <LoginModal isOpen={showLogin} onClose={() => setShowLogin(false)} />
-
-      <WhatsAppModal isOpen={showWhatsApp} onClose={() => setShowWhatsApp(false)} towerName={tower.name} />
+      {showLogin && (
+        <LoginModal
+          open={showLogin}
+          onOpenChange={setShowLogin}
+        />
+      )}
+      {showWhatsApp && (
+        <WhatsAppModal
+          open={showWhatsApp}
+          onOpenChange={setShowWhatsApp}
+          towerName={tower.name}
+        />
+      )}
     </>
   )
 }
