@@ -15,6 +15,7 @@ import type { Tower, FilterOptions, GlobalStats, PaginationOptions } from "@/typ
 
 export function TowerGrid() {
   const [towers, setTowers] = useState<Tower[]>([])
+  const [featuredTower, setFeaturedTower] = useState<Tower | null>(null)
   const [stats, setStats] = useState<GlobalStats>({
     totalVacantUnits: 0,
     averageRent: 0,
@@ -57,11 +58,17 @@ export function TowerGrid() {
           limit: pagination.limit,
         })
 
+        // Find and set the featured tower (Paramount Tower)
+        const paramountTower = response.data.find(tower => tower.name === "Paramount Tower")
+        setFeaturedTower(paramountTower || null)
+
+        // Filter out the featured tower from the main list
+        const otherTowers = response.data.filter(tower => tower.name !== "Paramount Tower")
+
         if (resetData) {
-          setTowers(response.data)
+          setTowers(otherTowers)
         } else {
-          // Append for infinite scroll (if implemented)
-          setTowers((prev) => [...prev, ...response.data])
+          setTowers((prev) => [...prev, ...otherTowers])
         }
 
         setStats(response.stats)
@@ -174,6 +181,20 @@ export function TowerGrid() {
 
         {/* Global Statistics */}
         <GlobalStatsBar stats={stats} isLoading={isLoading} />
+
+        {/* Featured Tower */}
+        {featuredTower && (
+          <div className="mb-12">
+            <h3 className="text-2xl font-bold text-white mb-6">Featured Tower</h3>
+            <div className="grid grid-cols-1">
+              <TowerCard
+                tower={featuredTower}
+                isPreview={false}
+                isFeatured={true}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Filters */}
         <TowerFilters

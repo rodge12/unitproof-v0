@@ -11,12 +11,13 @@ import { WhatsAppModal } from "@/components/modals/whatsapp-modal"
 import { useUser } from "@/contexts/user-context"
 import type { Tower } from "@/types"
 
-interface TowerCardProps {
-  tower: Tower
-  isPreview?: boolean
-}
+type TowerCardProps = {
+  tower: Tower;
+  isPreview?: boolean;
+  isFeatured?: boolean;
+};
 
-export function TowerCard({ tower, isPreview = false }: TowerCardProps) {
+export function TowerCard({ tower, isPreview = false, isFeatured = false }: TowerCardProps) {
   const [showUnits, setShowUnits] = useState(false)
   const [showLogin, setShowLogin] = useState(false)
   const [showWhatsApp, setShowWhatsApp] = useState(false)
@@ -76,7 +77,11 @@ export function TowerCard({ tower, isPreview = false }: TowerCardProps) {
 
   return (
     <>
-      <Card className="bg-gray-800 border-gray-700 hover:border-cyan-400 transition-all duration-300 group relative overflow-hidden">
+      <Card className={`group relative overflow-hidden transition-all duration-300 ${
+        isFeatured 
+          ? 'bg-gradient-to-r from-blue-900 to-indigo-900 border-blue-700' 
+          : 'bg-gray-800 border-gray-700'
+      }`}>
         {/* Hover glow effect */}
         <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 to-green-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
@@ -112,8 +117,15 @@ export function TowerCard({ tower, isPreview = false }: TowerCardProps) {
               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
             />
           </div>
-          <h3 className="text-lg font-semibold text-white group-hover:text-cyan-400 transition-colors duration-300">
+          <h3 className={`text-lg font-semibold group-hover:text-cyan-400 transition-colors duration-300 ${
+            isFeatured ? 'text-white' : 'text-white'
+          }`}>
             {tower.name}
+            {isFeatured && (
+              <span className="ml-2 px-2 py-1 text-xs font-medium bg-blue-500 text-white rounded-full">
+                Featured
+              </span>
+            )}
           </h3>
           <div className="flex items-center text-gray-400 text-sm">
             <MapPin className="w-4 h-4 mr-1" />

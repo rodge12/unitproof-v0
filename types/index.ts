@@ -20,6 +20,7 @@ export interface Tower {
   name: string
   area: string
   totalUnits: number
+  total_units?: number // For backward compatibility
   units: Unit[]
   // Future backend fields
   address?: string

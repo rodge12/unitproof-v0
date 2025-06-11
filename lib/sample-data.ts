@@ -68,6 +68,17 @@ function generateUnits(towerName: string, count: number): Unit[] {
 }
 
 export const sampleTowers: Tower[] = [
+  // Paramount Tower
+  {
+    id: "paramount-tower",
+    name: "Paramount Tower",
+    area: "Business Bay",
+    totalUnits: 500,
+    units: generateUnits("Paramount Tower", 500),
+    address: "Business Bay, Dubai",
+    buildYear: 2018,
+    lastUpdated: new Date().toISOString(),
+  },
   // Dubai Marina
   {
     id: "princess-tower",
