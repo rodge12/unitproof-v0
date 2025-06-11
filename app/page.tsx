@@ -65,6 +65,8 @@ async function TowerListLoader() {
   return <TowerList towers={towerData} />;
 }
 
+export const dynamic = 'force-dynamic';
+
 export default async function Home() {
   const supabase = createServerClient();
   

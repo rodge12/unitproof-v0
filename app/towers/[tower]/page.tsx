@@ -18,91 +18,78 @@ type Tower = {
   average_rent: number;
 };
 
-type VacantUnit = {
-  unit_no: string;
-  tower_name: string;
-  tower_slug: string;
-  status: string;
-  last_known_rent: number;
-  contract_end_date: string;
-};
-
-export function generateStaticParams() {
+export async function generateStaticParams() {
   const supabase = createServerClient();
-  const { data: units } = supabase
+  const { data: units } = await supabase
     .from('vacant_units')
     .select('tower_slug')
-    .returns<{ tower_slug: string }[]>();
+    .distinct();
 
-  // Get unique tower slugs
-  const uniqueSlugs = [...new Set(units?.map(unit => unit.tower_slug) || [])];
-
-  return uniqueSlugs.map(slug => ({
-    tower: slug
-  }));
+  return units?.map((unit) => ({
+    tower: unit.tower_slug,
+  })) || [];
 }
 
-export default function TowerPage({
+export default async function TowerPage({
   params,
 }: {
   params: { tower: string };
 }) {
   const supabase = createServerClient();
-  const { data: units, error } = supabase
+  const { data: units, error } = await supabase
     .from('vacant_units')
     .select('*')
-    .eq('tower_slug', params.tower)
-    .returns<VacantUnit[]>();
+    .eq('tower_slug', params.tower);
 
   if (error || !units || units.length === 0) {
     notFound();
   }
 
-  const towerName = units[0].tower_name;
-  const totalUnits = units.length;
-  const vacantUnits = units.filter((unit) => unit.status === 'Vacant').length;
-  const rentedUnits = totalUnits - vacantUnits;
-  const averageRent = Math.round(
-    units.reduce((sum: number, unit: VacantUnit) => sum + (unit.last_known_rent || 0), 0) / totalUnits
+  // Calculate summary statistics
+  const total_units = units.length;
+  const vacant_units = units.filter(unit => unit.status === 'Vacant').length;
+  const rented_units = total_units - vacant_units;
+  const average_rent = Math.round(
+    units.reduce((sum, unit) => sum + (unit.last_known_rent || 0), 0) / total_units
   );
 
   const tower: Tower = {
-    name: towerName,
-    units: units.map((unit: VacantUnit) => ({
+    name: units[0].tower_name,
+    units: units.map(unit => ({
       unit_no: unit.unit_no,
       status: unit.status,
       last_known_rent: unit.last_known_rent,
       contract_end_date: unit.contract_end_date,
     })),
-    total_units: totalUnits,
-    vacant_units: vacantUnits,
-    rented_units: rentedUnits,
-    average_rent: averageRent,
+    total_units,
+    vacant_units,
+    rented_units,
+    average_rent,
   };
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">{tower.name}</h1>
-        <DownloadButton tower={tower} />
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">{tower.name}</h1>
+        <DownloadButton units={tower.units} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <div className="bg-white p-4 rounded-lg shadow">
-          <h3 className="text-gray-500 text-sm">Total Units</h3>
-          <p className="text-2xl font-bold">{tower.total_units}</p>
+          <h3 className="text-sm font-medium text-gray-500">Total Units</h3>
+          <p className="text-2xl font-semibold">{tower.total_units}</p>
         </div>
         <div className="bg-white p-4 rounded-lg shadow">
-          <h3 className="text-gray-500 text-sm">Vacant Units</h3>
-          <p className="text-2xl font-bold text-red-500">{tower.vacant_units}</p>
+          <h3 className="text-sm font-medium text-gray-500">Vacant Units</h3>
+          <p className="text-2xl font-semibold text-blue-600">{tower.vacant_units}</p>
         </div>
         <div className="bg-white p-4 rounded-lg shadow">
-          <h3 className="text-gray-500 text-sm">Rented Units</h3>
-          <p className="text-2xl font-bold text-green-500">{tower.rented_units}</p>
+          <h3 className="text-sm font-medium text-gray-500">Rented Units</h3>
+          <p className="text-2xl font-semibold text-green-600">{tower.rented_units}</p>
         </div>
         <div className="bg-white p-4 rounded-lg shadow">
-          <h3 className="text-gray-500 text-sm">Average Rent</h3>
-          <p className="text-2xl font-bold">
+          <h3 className="text-sm font-medium text-gray-500">Average Rent</h3>
+          <p className="text-2xl font-semibold">
             AED {tower.average_rent.toLocaleString()}
           </p>
         </div>
@@ -135,10 +122,10 @@ export default function TowerPage({
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <span
-                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      className={`px-2 py-1 text-xs font-medium rounded-full ${
                         unit.status === 'Vacant'
-                          ? 'bg-red-100 text-red-800'
-                          : 'bg-green-100 text-green-800'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-blue-100 text-blue-800'
                       }`}
                     >
                       {unit.status}
