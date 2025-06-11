@@ -1,18 +1,12 @@
 import { NextRequest } from 'next/server';
 import { dataService } from '@/lib/services/data-service';
 
-type Props = {
-  params: {
-    id: string;
-  };
-};
-
 export async function GET(
   request: NextRequest,
-  props: Props
+  context: { params: { id: string } }
 ) {
   try {
-    const tower = await dataService.getTowerBySlug(props.params.id);
+    const tower = await dataService.getTowerBySlug(context.params.id);
     
     if (!tower) {
       return new Response(JSON.stringify({ error: 'Tower not found' }), {
