@@ -3,10 +3,10 @@ import { dataService } from '@/lib/services/data-service';
 
 export async function GET(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const tower = await dataService.getTowerBySlug(context.params.id);
+    const tower = await dataService.getTowerBySlug(params.id);
     
     if (!tower) {
       return new Response(JSON.stringify({ error: 'Tower not found' }), {
