@@ -1,20 +1,41 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { dataService } from '@/lib/services/data-service';
+
+type RouteContext = {
+  params: {
+    id: string;
+  };
+};
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: RouteContext
 ) {
   try {
-    const tower = dataService.getTowerBySlug(params.id);
+    const tower = dataService.getTowerBySlug(context.params.id);
 
     if (!tower) {
-      return NextResponse.json({ error: 'Tower not found' }, { status: 404 });
+      return new Response(JSON.stringify({ error: 'Tower not found' }), {
+        status: 404,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
     }
 
-    return NextResponse.json(tower);
+    return new Response(JSON.stringify(tower), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
   } catch (error) {
     console.error('API error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return new Response(JSON.stringify({ error: 'Internal server error' }), {
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
   }
 }
