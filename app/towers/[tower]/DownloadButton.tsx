@@ -1,52 +1,58 @@
 'use client';
 
-import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
-import * as XLSX from 'xlsx';
+import { Button } from '@/components/ui/button';
+import { Download } from 'lucide-react';
 
 type Unit = {
-  unit: string;
-  floor: number;
-  type: string;
-  rent: number;
+  unit_no: string;
   status: string;
+  last_known_rent: number;
+  contract_end_date: string;
 };
 
 type Tower = {
-  tower: string;
-  tower_name: string;
+  name: string;
   units: Unit[];
+  total_units: number;
+  vacant_units: number;
+  rented_units: number;
+  average_rent: number;
 };
 
 export function DownloadButton({ tower }: { tower: Tower }) {
   const handleDownload = () => {
-    // Prepare data for Excel
-    const data = tower.units.map(unit => ({
-      'Unit No.': unit.unit,
-      'Floor': unit.floor,
-      'Type': unit.type,
-      'Status': unit.status,
-      'Rent': unit.rent ? `AED ${unit.rent.toLocaleString()}` : ''
-    }));
+    const data = {
+      tower: tower.name,
+      summary: {
+        total_units: tower.total_units,
+        vacant_units: tower.vacant_units,
+        rented_units: tower.rented_units,
+        average_rent: tower.average_rent,
+      },
+      units: tower.units,
+    };
 
-    // Create worksheet
-    const ws = XLSX.utils.json_to_sheet(data);
-
-    // Create workbook
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Units');
-
-    // Generate Excel file
-    XLSX.writeFile(wb, `${tower.tower_name} - Units.xlsx`);
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: 'application/json',
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${tower.name.toLowerCase().replace(/\s+/g, '-')}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   return (
     <Button
       onClick={handleDownload}
-      className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+      variant="outline"
+      className="flex items-center gap-2"
     >
       <Download className="h-4 w-4" />
-      Download Excel
+      Download Data
     </Button>
   );
 } 

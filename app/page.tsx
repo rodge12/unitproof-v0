@@ -11,6 +11,7 @@ import { createSlug } from '@/utils/slug';
 import { TowerList } from '@/components/tower-list';
 import { Suspense } from 'react';
 import { TowerListRealtime } from '@/components/tower-list-realtime';
+import { createServerClient } from '@/utils/supabase/server';
 
 type TowerData = {
   tower_name: string;
@@ -22,6 +23,12 @@ type TowerCounts = Record<string, number>;
 type ProcessedTower = {
   name: string;
   vacantUnits: number;
+};
+
+type Tower = {
+  name: string;
+  slug: string;
+  vacant_units: number;
 };
 
 async function TowerListLoader() {
@@ -58,36 +65,45 @@ async function TowerListLoader() {
   return <TowerList towers={towerData} />;
 }
 
-export default async function HomePage() {
-  const cookieStore = cookies();
-  const supabase = createClient(cookieStore);
-
-  // Fetch all unique tower names and their vacant unit counts
-  const { data: towers, error } = await supabase
+export default async function Home() {
+  const supabase = createServerClient();
+  
+  // Fetch all units with their tower information
+  const { data: units, error } = await supabase
     .from('vacant_units')
-    .select('tower_name, unit_no')
-    .order('tower_name');
+    .select('tower_name, tower_slug, unit_no');
 
   if (error) {
-    console.error('Error fetching towers:', error);
+    console.error('Error fetching units:', error);
     return (
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold mb-4">Error Loading Towers</h1>
-        <p className="text-red-500">Failed to load tower data. Please try again later.</p>
+        <h1 className="text-3xl font-bold mb-8">Dubai Vacant Units</h1>
+        <p className="text-red-500">Error loading towers. Please try again later.</p>
       </div>
     );
   }
 
-  // Process the data to get unique towers with vacant unit counts
-  const towerCounts = (towers as TowerData[]).reduce((acc: TowerCounts, { tower_name }: { tower_name: string }) => {
-    acc[tower_name] = (acc[tower_name] || 0) + 1;
+  // Group units by tower
+  const towers = units?.reduce((acc: Record<string, Tower>, unit) => {
+    const towerName = unit.tower_name;
+    if (!acc[towerName]) {
+      acc[towerName] = {
+        name: towerName,
+        slug: unit.tower_slug,
+        vacant_units: 0
+      };
+    }
+    acc[towerName].vacant_units++;
     return acc;
   }, {});
 
-  const towerData: ProcessedTower[] = Object.entries(towerCounts).map(([name, vacantUnits]) => ({
-    name,
-    vacantUnits
-  }));
+  // Convert to array and sort by name
+  const towerList = Object.values(towers || {}).sort((a, b) => 
+    a.name.localeCompare(b.name)
+  );
+
+  // Debug log
+  console.log('All towers:', towerList);
 
   return (
     <div className="min-h-screen bg-gray-900">
@@ -133,7 +149,7 @@ export default async function HomePage() {
           </div>
 
           <div className="mt-8 text-gray-400 text-sm">
-            <p>Total Towers: {towerData.length}</p>
+            <p>Total Towers: {towerList.length}</p>
           </div>
         </div>
       </main>
