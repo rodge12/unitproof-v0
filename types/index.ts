@@ -15,20 +15,21 @@ export interface Unit {
   floorNumber?: number
 }
 
-export interface Tower {
-  id: string
-  name: string
-  area: string
-  totalUnits: number
-  total_units?: number // For backward compatibility
-  units: Unit[]
-  // Future backend fields
-  address?: string
-  coordinates?: { lat: number; lng: number }
-  buildYear?: number
-  amenities?: string[]
-  lastUpdated?: string
-}
+export type Tower = {
+  name: string;
+  slug: string;
+  vacant_units: number;
+  total_units: number;
+  average_rent: number;
+  units: Array<{
+    number: string;
+    type: string;
+    rentPrice?: number;
+    status: string;
+    daysVacant?: number;
+    contractEndDate?: string;
+  }>;
+};
 
 export interface FilterOptions {
   search: string
