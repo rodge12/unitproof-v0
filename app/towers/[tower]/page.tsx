@@ -18,8 +18,8 @@ type Tower = {
 
 // This function runs at build time to generate all possible tower pages
 export async function generateStaticParams() {
-  const cookieStore = cookies();
-  const supabase = createClient(cookieStore);
+  // Create Supabase client without cookies for static generation
+  const supabase = createClient();
 
   // Fetch all unique tower names
   const { data: towers, error } = await supabase
